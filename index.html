@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>マジックワード変換ゲーム</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            min-height: 1800px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .progress-bar {
+            background: #e0e0e0;
+            height: 8px;
+            border-radius: 4px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .question-container {
+            margin-bottom: 30px;
+        }
+
+        .question-number {
+            color: #667eea;
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        /* ===== Phase 1: Word Selection ===== */
+        .phase-1 {
+            display: none;
+        }
+
+        .instruction {
+            background: #e7f3ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .question-text {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 16px;
+            line-height: 2;
+            color: #333;
+            margin-bottom: 20px;
+            word-wrap: break-word;
+        }
+
+        .word-token {
+            display: inline-block;
+            background: white;
+            border: 2px solid #e0e0e0;
+            padding: 8px 12px;
+            margin: 4px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .word-token:hover {
+            background: #f0f0f0;
+            border-color: #667eea;
+            transform: scale(1.05);
+        }
+
+        .word-token.selected {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .selected-words {
+            background: #f9f9f9;
+            border: 2px dashed #ffc107;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            min-height: 50px;
+        }
+
+        .selected-words-label {
+            font-size: 12px;
+            color: #666;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .selected-word-tag {
+            display: inline-block;
+            background: #ffc107;
+            color: #333;
+            padding: 6px 12px;
+            margin: 4px;
+            border-radius: 15px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .selected-word-tag .remove-btn {
+            margin-left: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .selected-word-tag .remove-btn:hover {
+            opacity: 0.7;
+        }
+
+        .no-selection {
+            color: #999;
+            font-size: 13px;
+        }
+
+        /* ===== Phase 2: Conversion Input ===== */
+        .phase-2 {
+            display: none;
+        }
+
+        .conversion-item {
+            margin-bottom: 25px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 10px;
+        }
+
+        .conversion-label {
+            font-size: 13px;
+            color: #333;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .conversion-label .magic-word {
+            display: inline-block;
+            background: #fff3cd;
+            border: 2px dashed #ffc107;
+            padding: 4px 8px;
+            border-radius: 6px;
+            color: #ff6b6b;
+            margin: 0 5px;
+        }
+
+        .conversion-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .conversion-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        /* ===== Phase 3: Result ===== */
+        .phase-3 {
+            display: none;
+        }
+
+        .result-text-container {
+            background: #e8f5e9;
+            border: 2px solid #28a745;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .result-label {
+            font-size: 12px;
+            color: #333;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .result-text {
+            font-size: 18px;
+            color: #155724;
+            line-height: 1.8;
+            word-wrap: break-word;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 25px;
+        }
+
+        button {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            flex: 1;
+        }
+
+        .btn-submit:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-next {
+            background: #28a745;
+            color: white;
+            flex: 1;
+        }
+
+        .btn-next:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .btn-back {
+            background: #6c757d;
+            color: white;
+            flex: 0.5;
+        }
+
+        .btn-back:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .btn-restart {
+            background: #6c757d;
+            color: white;
+            flex: 1;
+        }
+
+        .btn-restart:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .feedback {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .feedback.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+            display: block;
+        }
+
+        .result-container {
+            display: none;
+            text-align: center;
+        }
+
+        .result-container h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .score-display {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+
+        .score-display .score {
+            font-size: 48px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .score-display .score-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .score-display .message {
+            margin-top: 15px;
+            font-size: 16px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 22px;
+            }
+
+            .question-text {
+                font-size: 14px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .options-group {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✨ マジックワード変換ゲーム</h1>
+        <p class="subtitle">マジックワードを見つけて、具体的な文章に変換しよう！</p>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <div id="gameContainer" class="question-container">
+            <div class="question-number" id="questionNumber"></div>
+
+            <!-- Phase 1: Word Selection -->
+            <div class="phase-1" id="phase1">
+                <div class="instruction">
+                    📌 下の文から「マジックワード」（抽象的で複数の意味を持つワード）を選んでください。
+                </div>
+                <div class="question-text" id="questionText"></div>
+                <div class="selected-words" id="selectedWords">
+                    <div class="selected-words-label">選択したマジックワード:</div>
+                    <div class="no-selection">（まだ選択されていません）</div>
+                </div>
+                <div class="button-group">
+                    <button class="btn-submit" id="phase1NextBtn">選択完了 → 次へ</button>
+                </div>
+                <div class="feedback" id="phase1Feedback"></div>
+            </div>
+
+            <!-- Phase 2: Conversion Input -->
+            <div class="phase-2" id="phase2">
+                <div class="instruction">
+                    📌 選択したマジックワードごとに、具体的な言葉を入力してください。
+                </div>
+                <div class="question-text" id="questionTextPhase2"></div>
+                <div id="conversionContainer"></div>
+                <div class="button-group">
+                    <button class="btn-back" id="phase2BackBtn">戻る</button>
+                    <button class="btn-submit" id="phase2NextBtn">確認 → 結果を見る</button>
+                </div>
+                <div class="feedback" id="phase2Feedback"></div>
+            </div>
+
+            <!-- Phase 3: Result -->
+            <div class="phase-3" id="phase3">
+                <div class="instruction">
+                    📌 変換後の文章です。
+                </div>
+                <div class="result-text-container">
+                    <div class="result-label">変換後の文章:</div>
+                    <div class="result-text" id="resultText"></div>
+                </div>
+                <div class="button-group" id="phase3ButtonGroup">
+                    <button class="btn-back" id="phase3BackBtn">戻る</button>
+                    <button class="btn-next" id="phase3NextBtn">次の問題へ</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="resultContainer" class="result-container">
+            <h2>🎉 ゲーム完了</h2>
+            <div class="score-display">
+                <div class="score-label">完了した問題数</div>
+                <div class="score" id="finalScore">0/0</div>
+                <div class="message" id="resultMessage"></div>
+            </div>
+            <div class="button-group">
+                <button class="btn-restart" id="restartBtn">もう一度プレイ</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                text: '適度な運動とバランスの良い食事が大切です。しっかり睡眠をとって、健康的な生活を送りましょう。',
+                words: [
+                    { word: '適度' },
+                    { word: '運動' },
+                    { word: 'バランスの良い' },
+                    { word: '食事' },
+                    { word: '大切' },
+                    { word: 'しっかり' },
+                    { word: '睡眠' },
+                    { word: '健康的' },
+                    { word: '生活' }
+                ]
+            },
+            {
+                text: 'チームが強くなるには、チームワークとコミュニケーションが重要です。定期的にミーティングを開いて、情報を共有しましょう。',
+                words: [
+                    { word: '強くなる' },
+                    { word: '成功' },
+                    { word: 'チームワーク' },
+                    { word: 'コミュニケーション' },
+                    { word: '重要' },
+                    { word: '定期的に' },
+                    { word: 'ミーティング' },
+                    { word: '情報' },
+                    { word: '共有' }
+                ]
+            },
+            {
+                text: '学力を向上させるためには、学習の質を高める必要があります。目標設定し継続的に改善していきましょう。',
+                words: [
+                    { word: '学力' },
+                    { word: '向上させる' },
+                    { word: '学習の質を高める' },
+                    { word: '目標設定し' },
+                    { word: '継続的に' },
+                    { word: '改善' }
+                ]
+            }
+        ];
+
+        let currentQuestion = 0;
+        let selectedWords = [];
+        let userConversions = {};
+        let currentPhase = 1;
+        let allResults = []; // 全問題の結果を保存
+
+        function tokenizeText(text) {
+            // 句読点と助詞・助動詞で分割
+            const tokens = [];
+            let currentToken = '';
+
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                const nextChar = text[i + 1] || '';
+
+                // 句読点の場合
+                if (char === '、' || char === '。') {
+                    if (currentToken) {
+                        tokens.push(currentToken);
+                        currentToken = '';
+                    }
+                    tokens.push(char);
+                    continue;
+                }
+
+                // スペースの場合
+                if (/\s/.test(char)) {
+                    if (currentToken) {
+                        tokens.push(currentToken);
+                        currentToken = '';
+                    }
+                    tokens.push(char);
+                    continue;
+                }
+
+                currentToken += char;
+
+                // 助詞・助動詞で分割するか判定
+                const auxiliaries = ['が', 'を', 'に', 'へ', 'から', 'まで', 'より', 'と', 'や', 'も', 'ので', 'て', 'た', 'ます', 'です'];
+                let shouldSplit = false;
+
+                for (let aux of auxiliaries) {
+                    if (currentToken.endsWith(aux) && currentToken.length > aux.length) {
+                        const beforeAux = currentToken.slice(0, -aux.length);
+                        tokens.push(beforeAux);
+                        tokens.push(aux);
+                        currentToken = '';
+                        shouldSplit = true;
+                        break;
+                    }
+                }
+            }
+
+            if (currentToken) {
+                tokens.push(currentToken);
+            }
+
+            return tokens.filter(t => t.length > 0);
+        }
+
+        function init() {
+            currentQuestion = 0;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            const question = questions[currentQuestion];
+            const totalQuestions = questions.length;
+
+            const progress = ((currentQuestion + 1) / totalQuestions) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+
+            document.getElementById('questionNumber').textContent = `問題 ${currentQuestion + 1} / ${totalQuestions}`;
+
+            // Phase 1: Word Selection
+            selectedWords = [];
+            userConversions = {};
+            currentPhase = 1;
+            showPhase(1);
+
+            // 選択したマジックワード欄をリセット
+            updateSelectedWordsDisplay();
+
+            // wordsに定義されているワードに基づいてテキストをトークン化
+            let htmlContent = question.text;
+            const sortedWords = [...question.words].sort((a, b) => b.word.length - a.word.length);
+
+            sortedWords.forEach(wordObj => {
+                const word = wordObj.word;
+                const regex = new RegExp(word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+                htmlContent = htmlContent.replace(regex, `<span class="word-token" data-word="${word}">${word}</span>`);
+            });
+
+            document.getElementById('questionText').innerHTML = htmlContent;
+
+            document.querySelectorAll('#phase1 .word-token').forEach(token => {
+                token.addEventListener('click', toggleWordSelection);
+            });
+
+            document.getElementById('phase1Feedback').style.display = 'none';
+        }
+
+        function toggleWordSelection(e) {
+            const word = e.target.dataset.word;
+            const index = selectedWords.indexOf(word);
+
+            if (index > -1) {
+                selectedWords.splice(index, 1);
+                e.target.classList.remove('selected');
+            } else {
+                selectedWords.push(word);
+                e.target.classList.add('selected');
+            }
+
+            updateSelectedWordsDisplay();
+        }
+
+        function updateSelectedWordsDisplay() {
+            const container = document.getElementById('selectedWords');
+
+            if (selectedWords.length === 0) {
+                container.innerHTML = '<div class="selected-words-label">選択したマジックワード:</div><div class="no-selection">（まだ選択されていません）</div>';
+            } else {
+                let html = '<div class="selected-words-label">選択したマジックワード:</div>';
+                selectedWords.forEach(word => {
+                    html += `<span class="selected-word-tag">${word}<span class="remove-btn" onclick="removeWord('${word}')">✕</span></span>`;
+                });
+                container.innerHTML = html;
+            }
+        }
+
+        function removeWord(word) {
+            const index = selectedWords.indexOf(word);
+            if (index > -1) {
+                selectedWords.splice(index, 1);
+            }
+            document.querySelectorAll('.word-token').forEach(token => {
+                if (token.dataset.word === word) {
+                    token.classList.remove('selected');
+                }
+            });
+            updateSelectedWordsDisplay();
+        }
+
+        function phase1Next() {
+            if (selectedWords.length === 0) {
+                document.getElementById('phase1Feedback').style.display = 'block';
+                document.getElementById('phase1Feedback').className = 'feedback error';
+                document.getElementById('phase1Feedback').textContent = 'マジックワードを1つ以上選択してください！';
+                return;
+            }
+
+            currentPhase = 2;
+            showPhase(2);
+            generateConversionOptions();
+        }
+
+        function generateConversionOptions() {
+            const question = questions[currentQuestion];
+            const container = document.getElementById('conversionContainer');
+            container.innerHTML = '';
+
+            // 問題文を表示（選択したワードをハイライト）
+            let htmlContent = question.text;
+            const sortedWords = [...selectedWords].sort((a, b) => b.length - a.length);
+
+            sortedWords.forEach(word => {
+                const regex = new RegExp(word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+                htmlContent = htmlContent.replace(regex, `<span class="word-token" style="background: #667eea; color: white;">${word}</span>`);
+            });
+
+            document.getElementById('questionTextPhase2').innerHTML = htmlContent;
+
+            // 入力フィールドを生成
+            selectedWords.forEach((word, index) => {
+                const div = document.createElement('div');
+                div.className = 'conversion-item';
+
+                const label = document.createElement('div');
+                label.className = 'conversion-label';
+                label.innerHTML = `<span class="magic-word">${word}</span> を具体的に:`;
+
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'conversion-input';
+                input.id = `conversion-${index}`;
+                input.placeholder = '具体的な言葉を入力してください';
+                input.addEventListener('input', (e) => {
+                    userConversions[word] = e.target.value;
+                });
+
+                div.appendChild(label);
+                div.appendChild(input);
+                container.appendChild(div);
+            });
+
+            // 最初の入力フィールドにフォーカス
+            setTimeout(() => {
+                const firstInput = document.getElementById('conversion-0');
+                if (firstInput) firstInput.focus();
+            }, 100);
+
+            document.getElementById('phase2Feedback').style.display = 'none';
+        }
+
+        function phase2Next() {
+            const allFilled = selectedWords.every(word =>
+                userConversions[word] !== undefined && userConversions[word].trim() !== ''
+            );
+
+            if (!allFilled) {
+                document.getElementById('phase2Feedback').style.display = 'block';
+                document.getElementById('phase2Feedback').className = 'feedback error';
+                document.getElementById('phase2Feedback').textContent = 'すべてのマジックワードに入力してください！';
+                return;
+            }
+
+            currentPhase = 3;
+            showPhase(3);
+            generateResultText();
+        }
+
+        function generateResultText() {
+            const question = questions[currentQuestion];
+            let resultText = question.text;
+
+            // 長い単語から置換（短い単語を先に置換して長さが変わるのを避ける）
+            const sortedWords = [...selectedWords].sort((a, b) => b.length - a.length);
+
+            sortedWords.forEach(word => {
+                const conversion = userConversions[word];
+                const regex = new RegExp(word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+                resultText = resultText.replace(regex, conversion);
+            });
+
+            // 結果を保存
+            allResults[currentQuestion] = resultText;
+
+            document.getElementById('resultText').textContent = resultText;
+        }
+
+        function phase2Back() {
+            currentPhase = 1;
+            showPhase(1);
+        }
+
+        function phase3Back() {
+            currentPhase = 2;
+            showPhase(2);
+        }
+
+        function phase3Next() {
+            if (currentQuestion < questions.length - 1) {
+                currentQuestion++;
+                loadQuestion();
+            } else {
+                showGameResult();
+            }
+        }
+
+        function showPhase(phase) {
+            document.getElementById('phase1').style.display = phase === 1 ? 'block' : 'none';
+            document.getElementById('phase2').style.display = phase === 2 ? 'block' : 'none';
+            document.getElementById('phase3').style.display = phase === 3 ? 'block' : 'none';
+        }
+
+        function showGameResult() {
+            document.getElementById('gameContainer').style.display = 'none';
+            document.getElementById('resultContainer').style.display = 'block';
+
+            const totalQuestions = questions.length;
+            document.getElementById('finalScore').textContent = `${totalQuestions}/${totalQuestions}`;
+            document.getElementById('resultMessage').textContent = 'マジックワードを変換した文章が完成しました。近くの人と共有しましょう。🎉';
+
+            // 全結果を表示
+            let resultsHTML = '<div style="margin-top: 30px; text-align: left;">';
+            allResults.forEach((result, index) => {
+                resultsHTML += `
+                    <div style="margin-bottom: 20px; padding: 15px; background: #f9f9f9; border-radius: 10px;">
+                        <div style="font-weight: bold; color: #667eea; margin-bottom: 10px;">問題 ${index + 1}:</div>
+                        <div style="font-size: 16px; line-height: 1.8; color: #333;">${result}</div>
+                    </div>
+                `;
+            });
+            resultsHTML += '</div>';
+
+            document.getElementById('resultContainer').insertAdjacentHTML('beforeend', resultsHTML);
+        }
+
+        function restart() {
+            // 結果表示の HTML を削除
+            const resultsDiv = document.querySelector('#resultContainer > div[style*="margin-top: 30px"]');
+            if (resultsDiv) {
+                resultsDiv.remove();
+            }
+
+            document.getElementById('resultContainer').style.display = 'none';
+            document.getElementById('gameContainer').style.display = 'block';
+            allResults = [];
+            init();
+        }
+
+        // Event Listeners
+        document.getElementById('phase1NextBtn').addEventListener('click', phase1Next);
+        document.getElementById('phase2BackBtn').addEventListener('click', phase2Back);
+        document.getElementById('phase2NextBtn').addEventListener('click', phase2Next);
+        document.getElementById('phase3BackBtn').addEventListener('click', phase3Back);
+        document.getElementById('phase3NextBtn').addEventListener('click', phase3Next);
+        document.getElementById('restartBtn').addEventListener('click', restart);
+
+        // Initialize
+        init();
+    </script>
+</body>
+</html>
